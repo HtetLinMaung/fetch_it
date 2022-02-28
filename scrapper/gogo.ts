@@ -21,7 +21,7 @@ export const getRecentReleases = async (p: number = 1) => {
     let j = 5;
     while (j < p) {
       await page.click(`.recent .pagination-list a[data-page='${j}']`);
-      await timeout(1000);
+      await timeout(2000);
       j = j + 2;
     }
     await page.click(`.recent .pagination-list a[data-page='${p}']`);
