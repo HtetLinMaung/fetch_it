@@ -6,18 +6,26 @@ const timeout = (ms: number) =>
 
 declare const document: any;
 
-export const getJobNetJobs = async () => {
+export const getJobNetJobs = async (n: number = 1, kw: string = "") => {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
-  await page.goto("https://www.jobnet.com.mm/mm/jobs-in-myanmar", {
-    waitUntil: "networkidle2",
-  });
+  await page.goto(
+    `https://www.jobnet.com.mm/mm/jobs-in-myanmar${kw ? "?kw=" + kw : ""}`,
+    {
+      waitUntil: "networkidle2",
+    }
+  );
+
   let jobs: any[] = [];
 
-  const disabled: boolean = await page.evaluate(() => {
-    const nextBtn = document.querySelector(".search__action-btn:last-child");
-    return nextBtn.disabled;
-  });
+  let disabled = true;
+
+  if (!kw) {
+    disabled = await page.evaluate(() => {
+      const nextBtn = document.querySelector(".search__action-btn:last-child");
+      return nextBtn.disabled;
+    });
+  }
 
   let p = 1;
   do {
@@ -53,6 +61,8 @@ export const getJobNetJobs = async () => {
           job_function: categories[i].innerText
             .replace("Job Function:", "")
             .trim(),
+          description: "",
+          requirements: "",
         });
         i++;
       }
@@ -66,10 +76,28 @@ export const getJobNetJobs = async () => {
         return job;
       }),
     ];
-    await page.click(".search__action-btn:last-child");
-    await timeout(10000);
-    console.log(`page ${p++}: `, sub_jobs.length);
-  } while (!disabled);
+    if (!kw && n > 1) {
+      await page.click(".search__action-btn:last-child");
+      await timeout(20000);
+    }
+    console.log(`page ${p}: `, sub_jobs.length);
+  } while (!disabled && p++ < n);
+
+  for (const job of jobs) {
+    await page.goto(job.title_href, {
+      waitUntil: "networkidle2",
+    });
+    job.description = await page.evaluate(() => {
+      const description = document.querySelector(".job-details__description");
+      return description.innerText.replace("Job Description", "").trim();
+    });
+    job.requirements = await page.evaluate(() => {
+      const requirements = document.querySelector(
+        ".job-details__description-contant"
+      );
+      return requirements.innerText.trim();
+    });
+  }
 
   await browser.close();
   return jobs;
