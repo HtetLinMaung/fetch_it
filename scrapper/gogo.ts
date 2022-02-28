@@ -60,7 +60,7 @@ export const getEpisodeByLink = async (link: string) => {
   });
   const page = await browser.newPage();
   await page.setDefaultNavigationTimeout(0);
-  await page.goto(link, { waitUntil: "networkidle2" });
+  await page.goto(link);
 
   const stream = await page.evaluate(() => {
     return document.querySelector("#load_anime iframe").src;
