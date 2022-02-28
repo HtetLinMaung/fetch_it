@@ -2,6 +2,8 @@ FROM node:lts-bullseye
 
 WORKDIR /app
 
+RUN apt update
+
 RUN apt-get install -y \
     fonts-liberation \
     gconf-service \
