@@ -4,7 +4,7 @@ import timeout from "../utils/timeout";
 declare const document: any;
 
 export const getRecentReleases = async (p: number = 1) => {
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({ headless: true });
   const page = await browser.newPage();
   await page.setDefaultNavigationTimeout(0);
   await page.goto(`https://ww2.gogoanimes.org/`, {
