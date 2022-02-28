@@ -59,8 +59,8 @@ export const getEpisodeByLink = async (link: string) => {
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
   const page = await browser.newPage();
-  await page.setDefaultNavigationTimeout(0);
-  await page.goto(link);
+
+  await page.goto(link, { timeout: 30000 });
 
   const stream = await page.evaluate(() => {
     return document.querySelector("#load_anime iframe").src;
