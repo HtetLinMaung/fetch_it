@@ -40,6 +40,8 @@ COPY package.json .
 
 RUN npm i
 
+RUN chmod -R o+rwx node_modules/puppeteer/.local-chromium
+
 COPY . .
 
 CMD [ "npm", "start" ]
