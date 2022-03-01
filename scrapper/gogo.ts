@@ -16,7 +16,7 @@ export const getRecentReleases = async (p: number = 1) => {
 
   if (p > 1 && p <= 5) {
     await page.click(`.recent .pagination-list a[data-page='${p}']`);
-    await timeout(1000);
+    await timeout(2000);
   } else if (p > 5) {
     let j = 5;
     while (j < p) {
