@@ -44,10 +44,13 @@ export const getEpisodeByLink = async (link: string) => {
   });
   const page = await browser.newPage();
   await page.setDefaultNavigationTimeout(0);
-  await page.goto(link);
-
+  await page.goto(link, { timeout: 0 });
+  await page.waitForSelector("#load_anime iframe", { timeout: 0 });
   const stream = await page.evaluate(() => {
     return document.querySelector("#load_anime iframe").src;
+  });
+  const title = await page.evaluate(() => {
+    return document.querySelector(".anime_video_body h1").innerText;
   });
 
   const related_episodes = [];
@@ -60,5 +63,5 @@ export const getEpisodeByLink = async (link: string) => {
   }
 
   await browser.close();
-  return { related_episodes, stream };
+  return { related_episodes, stream, title };
 };
