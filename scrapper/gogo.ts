@@ -43,9 +43,13 @@ export const getEpisodeByLink = async (link: string) => {
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
   const page = await browser.newPage();
+  page.on("console", (msg) => console.log(msg.text()));
+  page.on("pageerror", (msg) => console.log(msg));
   await page.setDefaultNavigationTimeout(0);
   await page.goto(link, { timeout: 0 });
+  await page.screenshot({ path: "screenshot1.png" });
   await page.waitForSelector("#load_anime iframe", { timeout: 0 });
+  await page.screenshot({ path: "screenshot2.png" });
   const stream = await page.evaluate(() => {
     return document.querySelector("#load_anime iframe").src;
   });
