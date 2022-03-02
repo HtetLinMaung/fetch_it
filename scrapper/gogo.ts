@@ -10,28 +10,12 @@ export const getRecentReleases = async (p: number = 1) => {
   });
   const page = await browser.newPage();
   await page.setDefaultNavigationTimeout(0);
-  await page.goto(`https://ww2.gogoanimes.org/`, {
-    waitUntil: "networkidle2",
-  });
 
-  if (p > 1 && p <= 5) {
-    await page.click(`.recent .pagination-list a[data-page='${p}']`);
-    await timeout(2000);
-  } else if (p > 5) {
-    let j = 5;
-    while (j < p) {
-      await page.click(`.recent .pagination-list a[data-page='${j}']`);
-      await timeout(2000);
-      j = j + 2;
-    }
-    await page.click(`.recent .pagination-list a[data-page='${p}']`);
-    await timeout(1000);
-  }
+  await page.goto(
+    `https://ww2.gogoanimes.org/ajax/page-recent-release?page=${p}&type=1`
+  );
 
   const recent_releases: any = await page.evaluate(() => {
-    const p = document.querySelector(
-      `.recent .pagination-list li.selected`
-    ).innerText;
     const anchors = document.querySelectorAll("ul.items p.name a");
     const images = document.querySelectorAll("ul.items img");
     const episodes = document.querySelectorAll("ul.items p.episode");
@@ -46,11 +30,11 @@ export const getRecentReleases = async (p: number = 1) => {
       });
       i++;
     }
-    return { animes, page: p };
+    return animes;
   });
 
   await browser.close();
-  return recent_releases;
+  return { recent_releases, page: p };
 };
 
 export const getEpisodeByLink = async (link: string) => {
@@ -60,7 +44,7 @@ export const getEpisodeByLink = async (link: string) => {
   });
   const page = await browser.newPage();
   await page.setDefaultNavigationTimeout(0);
-  await page.goto(link, { waitUntil: "networkidle2" });
+  await page.goto(link);
 
   const stream = await page.evaluate(() => {
     return document.querySelector("#load_anime iframe").src;

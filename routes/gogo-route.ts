@@ -20,7 +20,7 @@ router.get("/recent-releases", async (req, res) => {
     const response = {
       code: 200,
       message: "Success",
-      data: data.animes,
+      data: data.recent_releases,
       page: data.page,
     };
     if (!value) {
