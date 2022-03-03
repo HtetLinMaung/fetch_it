@@ -1,65 +1,40 @@
-import puppeteer from "puppeteer";
-import timeout from "../utils/timeout";
 import axios from "axios";
 import * as cheerio from "cheerio";
 
-declare const document: any;
-
 export const getRecentReleases = async (p: number = 1) => {
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-  });
-  const page = await browser.newPage();
-  await page.setDefaultNavigationTimeout(0);
-
-  await page.goto(
+  const { data } = await axios.get(
     `https://ww2.gogoanimes.org/ajax/page-recent-release?page=${p}&type=1`
   );
-
-  const recent_releases: any = await page.evaluate(() => {
-    const anchors = document.querySelectorAll("ul.items p.name a");
-    const images = document.querySelectorAll("ul.items img");
-    const episodes = document.querySelectorAll("ul.items p.episode");
-    const animes = [];
-    let i = 0;
-    for (const anchor of anchors) {
-      animes.push({
-        link: anchor.href,
-        name: anchor.innerText.trim(),
-        img: images[i].src,
-        latest_episode: episodes[i].innerText.trim(),
-      });
-      i++;
-    }
-    return animes;
+  const $ = cheerio.load(data);
+  const anchors: any[] = [];
+  $("ul.items p.name a").each(function (i, el) {
+    anchors[i] = {
+      link: el.attribs.href,
+      name: $(this).text().trim(),
+    };
   });
-
-  await browser.close();
+  const images: string[] = [];
+  $("ul.items img").each(function (i, el) {
+    images[i] = el.attribs.src;
+  });
+  const episodes: string[] = [];
+  $("ul.items p.episode").each(function (i, el) {
+    episodes[i] = $(this).text().trim();
+  });
+  const recent_releases = [];
+  let i = 0;
+  for (const anchor of anchors) {
+    recent_releases.push({
+      ...anchor,
+      img: images[i],
+      latest_episode: episodes[i],
+    });
+    i++;
+  }
   return { recent_releases, page: p };
 };
 
 export const getEpisodeByLink = async (link: string) => {
-  // const browser = await puppeteer.launch({
-  //   headless: true,
-  //   args: ["--no-sandbox", "--disable-setuid-sandbox"],
-  // });
-  // const page = await browser.newPage();
-  // await page.setUserAgent(
-  //   "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36"
-  // );
-  // page.on("console", (msg) => console.log(msg.text()));
-  // page.on("pageerror", (msg) => console.log(msg));
-  // await page.setDefaultNavigationTimeout(0);
-  // await page.goto(link, { timeout: 0, waitUntil: "networkidle2" });
-  // await page.screenshot({ path: "screenshot1.png" });
-  // const stream = await page.evaluate(() => {
-  //   return document.querySelector("#load_anime iframe").src;
-  // });
-  // const title = await page.evaluate(() => {
-  //   return document.querySelector(".anime_video_body h1").innerText;
-  // });
-
   const { data } = await axios.get(link);
   const $ = cheerio.load(data);
   const stream = $("#load_anime iframe").attr("src");
@@ -74,6 +49,5 @@ export const getEpisodeByLink = async (link: string) => {
     related_episodes.push({ link: `${l}-${j}`, name: `EP ${j}` });
   }
 
-  // await browser.close();
   return { related_episodes, stream, title };
 };
