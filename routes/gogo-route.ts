@@ -3,6 +3,7 @@ import express from "express";
 import {
   getAnimeInfo,
   getAnimes,
+  getAnimesByGenre,
   getEpisodeByLink,
   getRecentReleases,
   getRelatedEpisodes,
@@ -67,6 +68,38 @@ router.get("/type/:m", async (req, res) => {
     }
     client.set(
       `fetchit:type:${req.params.m}:${JSON.stringify(req.query)}`,
+      JSON.stringify(response)
+    );
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ code: 500, message: "Server Error!" });
+  }
+});
+
+router.get("/genre/:genre", async (req, res) => {
+  try {
+    const client = await getRedisClient();
+    const value = await client.get(
+      `fetchit:genre:${req.params.genre}:${JSON.stringify(req.query)}`
+    );
+    if (value) {
+      res.json(JSON.parse(value));
+    }
+
+    const p: number = parseInt((req.query.page as string) || "1");
+    const genre = req.params.genre as string;
+    const data = await getAnimesByGenre(genre, p);
+    const response = {
+      code: 200,
+      message: "Success",
+      data: data.animes,
+      page: data.page,
+    };
+    if (!value) {
+      res.json(response);
+    }
+    client.set(
+      `fetchit:genre:${req.params.genre}:${JSON.stringify(req.query)}`,
       JSON.stringify(response)
     );
   } catch (err) {

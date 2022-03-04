@@ -218,3 +218,35 @@ export const searchAnimes = async (keyword: string, p: number = 1) => {
   }
   return { results, page: p };
 };
+
+export const getAnimesByGenre = async (genre: string, p: number = 1) => {
+  const { data } = await axios.get(`${host}/genre/${genre}?page=${p}`);
+  const $ = cheerio.load(data);
+
+  const anchors: any[] = [];
+  $("ul.items p.name a").each(function (i, el) {
+    anchors[i] = {
+      link: el.attribs.href,
+      name: $(this).text().trim(),
+    };
+  });
+  const images: string[] = [];
+  $("ul.items img").each(function (i, el) {
+    images[i] = el.attribs.src;
+  });
+  const episodes: string[] = [];
+  $("ul.items p.episode").each(function (i, el) {
+    episodes[i] = $(this).text().trim();
+  });
+  const animes = [];
+  let i = 0;
+  for (const anchor of anchors) {
+    animes.push({
+      ...anchor,
+      img: images[i],
+      release: episodes[i],
+    });
+    i++;
+  }
+  return { animes, page: p };
+};
