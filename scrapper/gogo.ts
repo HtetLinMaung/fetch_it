@@ -140,6 +140,7 @@ export const getRelatedEpisodes = async (c: string, eps: any[] = []) => {
       related_episodes.push({
         link: el.attribs.href,
         name: `EP ${el.attribs.href.split("-").pop()}`,
+        episode: el.attribs.href.split("-").pop(),
       });
     });
   }
@@ -174,7 +175,13 @@ export const getEpisodeByLink = async (link: string) => {
     });
   });
 
-  return { stream, title, eps };
+  let current_episode = "";
+  const titlearr = title.split("Episode");
+  if (titlearr.length > 1) {
+    current_episode = titlearr[1].trim().replaceAll(/[a-zA-Z]/g, "");
+  }
+
+  return { stream, title, eps, current_episode };
 };
 
 export const searchAnimes = async (keyword: string, p: number = 1) => {
