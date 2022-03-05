@@ -10,6 +10,7 @@ import {
   getOngoingAnimes,
   getRecentReleases,
   getRelatedEpisodes,
+  searchAnimeInfos,
   searchAnimes,
 } from "../scrapper/gogo";
 import { getRedisClient } from "../utils/redis";
@@ -316,6 +317,36 @@ router.post("/related-episodes", async (req, res) => {
     }
     client.set(
       `fetchit:related-episodes:${JSON.stringify(req.body)}`,
+      JSON.stringify(response)
+    );
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ code: 500, message: "Server Error!" });
+  }
+});
+
+router.get("/search-infos", async (req, res) => {
+  try {
+    const client = await getRedisClient();
+    const value = await client.get(
+      `fetchit:search-infos:${JSON.stringify(req.query)}`
+    );
+    if (value) {
+      res.json(JSON.parse(value));
+    }
+
+    const keyword = req.query.keyword as string;
+    const data = await searchAnimeInfos(keyword);
+    const response = {
+      code: 200,
+      message: "Success",
+      data,
+    };
+    if (!value) {
+      res.json(response);
+    }
+    client.set(
+      `fetchit:search-infos:${JSON.stringify(req.query)}`,
       JSON.stringify(response)
     );
   } catch (err) {

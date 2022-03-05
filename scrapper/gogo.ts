@@ -159,39 +159,80 @@ export const getEpisodeByLink = async (link: string) => {
   return { stream, title, eps, current_episode, category, anime_name };
 };
 
-export const searchAnimes = async (keyword: string, p: number = 1) => {
-  const { data } = await axios.get(
-    `${host}/search${
-      host.includes(".fi") ? ".html" : ""
-    }?keyword=${keyword}&page=${p}`
-  );
-  const $ = cheerio.load(data);
-  const anchors: any[] = [];
-  $("ul.items p.name a").each(function (i, el) {
-    anchors[i] = {
-      link: `${host}/watch/${el.attribs.href.split("/").pop()}-episode-1`,
-      name: $(this).text().trim(),
-    };
-  });
-  const images: string[] = [];
-  $("ul.items img").each(function (i, el) {
-    images[i] = el.attribs.src;
-  });
-  const releases: string[] = [];
-  $("ul.items p.released").each(function (i, el) {
-    releases[i] = $(this).text().trim();
-  });
-  const results = [];
-  let i = 0;
-  for (const anchor of anchors) {
-    results.push({
-      ...anchor,
-      img: images[i],
-      release: releases[i],
+export const searchAnimeInfos = async (keyword: string) => {
+  try {
+    const { data } = await axios.get(`${ajax}/site/loadAjaxSearch`, {
+      params: {
+        keyword,
+        id: "-1",
+        link_web: host,
+      },
     });
-    i++;
+    const $ = cheerio.load(data.content);
+
+    const images: string[] = [];
+    $("a.ss-title .thumbnail-recent_search").each(function (i, el) {
+      const style = $(this).attr("style") as string;
+      images.push(
+        style
+          .trim()
+          .replace("background: url(", "")
+          .replace(")", "")
+          .replace(/\"/g, "")
+      );
+    });
+
+    const results: any[] = [];
+    $("a.ss-title").each(function (i, el) {
+      results.push({
+        category: el.attribs.href.replace(host, "/"),
+        name: $(this).text(),
+        img: images[i],
+      });
+    });
+    return results;
+  } catch (err) {
+    return [];
   }
-  return { results, page: p };
+};
+
+export const searchAnimes = async (keyword: string, p: number = 1) => {
+  try {
+    const { data } = await axios.get(
+      `${host}/search${
+        host.includes(".fi") ? ".html" : ""
+      }?keyword=${keyword}&page=${p}`
+    );
+    const $ = cheerio.load(data);
+    const anchors: any[] = [];
+    $("ul.items p.name a").each(function (i, el) {
+      anchors[i] = {
+        link: `${host}/watch/${el.attribs.href.split("/").pop()}-episode-1`,
+        name: $(this).text().trim(),
+      };
+    });
+    const images: string[] = [];
+    $("ul.items img").each(function (i, el) {
+      images[i] = el.attribs.src;
+    });
+    const releases: string[] = [];
+    $("ul.items p.released").each(function (i, el) {
+      releases[i] = $(this).text().trim();
+    });
+    const results = [];
+    let i = 0;
+    for (const anchor of anchors) {
+      results.push({
+        ...anchor,
+        img: images[i],
+        release: releases[i],
+      });
+      i++;
+    }
+    return { results, page: p };
+  } catch (err) {
+    return { results: [], page: p };
+  }
 };
 
 export const getAnimesByGenre = async (genre: string, p: number = 1) => {
