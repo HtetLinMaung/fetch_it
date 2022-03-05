@@ -5,36 +5,9 @@ const host = "https://gogoanime.fi";
 const ajax = "https://ajax.gogo-load.com";
 
 export const getAnimes = async (m: string, p: number = 1) => {
-  const { data } = await axios.get(
-    `${host}/${m}${host.includes("fi") ? ".html" : ""}?page=${p}`
-  );
-  const $ = cheerio.load(data);
-  const anchors: any[] = [];
-  $("ul.items p.name a").each(function (i, el) {
-    anchors[i] = {
-      link: el.attribs.href,
-      name: $(this).text().trim(),
-    };
+  return getAnimesByUrl(`${m}${host.includes("fi") ? ".html" : ""}`, {
+    page: p,
   });
-  const images: string[] = [];
-  $("ul.items img").each(function (i, el) {
-    images[i] = el.attribs.src;
-  });
-  const episodes: string[] = [];
-  $("ul.items p.episode").each(function (i, el) {
-    episodes[i] = $(this).text().trim();
-  });
-  const animes = [];
-  let i = 0;
-  for (const anchor of anchors) {
-    animes.push({
-      ...anchor,
-      img: images[i],
-      release: episodes[i],
-    });
-    i++;
-  }
-  return { animes, page: p };
 };
 
 export const getAnimeInfo = async (c: string) => {
@@ -155,6 +128,8 @@ export const getEpisodeByLink = async (link: string) => {
   const title = $(".anime_video_body h1")
     .text()
     .replace("English Subbed at gogoanime", "");
+  const category = $(".anime-info a").attr("href");
+  const anime_name = $(".anime-info a").text();
 
   const eps: any[] = [];
   $("#episode_page li a").each(function (i, el) {
@@ -181,7 +156,7 @@ export const getEpisodeByLink = async (link: string) => {
     current_episode = titlearr[1].trim().replaceAll(/[a-zA-Z]/g, "");
   }
 
-  return { stream, title, eps, current_episode };
+  return { stream, title, eps, current_episode, category, anime_name };
 };
 
 export const searchAnimes = async (keyword: string, p: number = 1) => {
@@ -220,9 +195,36 @@ export const searchAnimes = async (keyword: string, p: number = 1) => {
 };
 
 export const getAnimesByGenre = async (genre: string, p: number = 1) => {
-  const { data } = await axios.get(`${host}/genre/${genre}?page=${p}`);
-  const $ = cheerio.load(data);
+  return getAnimesByUrl(`genre/${genre}`, { page: p });
+};
 
+export const getAnimesBySubCategory = async (
+  subCategory: string,
+  p: number = 1
+) => {
+  return getAnimesByUrl(`sub-category/${subCategory}`, { page: p });
+};
+
+export const getOngoingAnimes = async (p: number = 1) => {
+  return getAnimesByUrl(`ongoing-anime${host.includes(".fi") ? ".html" : ""}`, {
+    page: p,
+  });
+};
+
+export const getCompletedAnimes = async (p: number = 1) => {
+  return getAnimesByUrl(
+    `completed-anime${host.includes(".fi") ? ".html" : ""}`,
+    {
+      page: p,
+    }
+  );
+};
+
+export const getAnimesByUrl = async (url: string, params = { page: 1 }) => {
+  const { data } = await axios.get(`${host}/${url}`, {
+    params,
+  });
+  const $ = cheerio.load(data);
   const anchors: any[] = [];
   $("ul.items p.name a").each(function (i, el) {
     anchors[i] = {
@@ -248,5 +250,5 @@ export const getAnimesByGenre = async (genre: string, p: number = 1) => {
     });
     i++;
   }
-  return { animes, page: p };
+  return { animes, page: params.page };
 };
