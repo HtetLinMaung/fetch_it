@@ -110,10 +110,13 @@ export const getRelatedEpisodes = async (c: string, eps: any[] = []) => {
     );
     const $ = cheerio.load(epres.data);
     $("#episode_related a").each(function (i, el) {
+      const episode = el.attribs.href.includes("-episode")
+        ? el.attribs.href.split("-").pop()
+        : "0";
       related_episodes.push({
         link: el.attribs.href,
-        name: `EP ${el.attribs.href.split("-").pop()}`,
-        episode: el.attribs.href.split("-").pop(),
+        name: `EP ${episode}`,
+        episode,
       });
     });
   }
