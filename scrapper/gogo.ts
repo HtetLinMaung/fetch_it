@@ -1,8 +1,10 @@
 import axios from "axios";
 import * as cheerio from "cheerio";
 
-const host = "https://gogoanime.fi";
-const ajax = "https://ajax.gogo-load.com";
+// const host = "https://gogoanime.fi";
+// const ajax = "https://ajax.gogo-load.com";
+const host = "https://ww4.gogoanimes.org";
+const ajax = "https://ww4.gogoanimes.org";
 
 export const getAnimes = async (m: string, p: number = 1) => {
   return getAnimesByUrl(`${m}${host.includes("fi") ? ".html" : ""}`, {
@@ -102,11 +104,13 @@ export const getRelatedEpisodes = async (c: string, eps: any[] = []) => {
   const related_episodes: any = [];
   for (const ep of eps) {
     const epres = await axios.get(
-      `${host.includes(".fi") ? ajax : host}/ajax/load-list-episode?ep_start=${
-        ep.ep_start
-      }&ep_end=${ep.ep_end}&id=${ep.movie_id || "0"}&default_ep=${
-        ep.default_ep || ""
-      }&alias=${host.includes(".fi") ? ep.alias : alias}`
+      `${host.includes(".fi") ? ajax : host}/ajax${
+        host.includes("https://ww4.gogoanimes.org") ? "ajax" : ""
+      }/load-list-episode?ep_start=${ep.ep_start}&ep_end=${ep.ep_end}&id=${
+        ep.movie_id || "0"
+      }&default_ep=${ep.default_ep || ""}&alias=${
+        host.includes(".fi") ? ep.alias : alias
+      }`
     );
     const $ = cheerio.load(epres.data);
     $("#episode_related a").each(function (i, el) {
@@ -124,7 +128,11 @@ export const getRelatedEpisodes = async (c: string, eps: any[] = []) => {
 };
 
 export const getEpisodeByLink = async (link: string) => {
-  const { data } = await axios.get(`${host}/${link}`);
+  const { data } = await axios.get(
+    host.includes("https://ww4.gogoanimes.org")
+      ? `${host}/watch/${link}`
+      : `${host}/${link}`
+  );
   let $ = cheerio.load(data);
   let stream = $("#load_anime iframe").attr("src");
 
@@ -164,13 +172,18 @@ export const getEpisodeByLink = async (link: string) => {
 
 export const searchAnimeInfos = async (keyword: string) => {
   try {
-    const { data } = await axios.get(`${ajax}/site/loadAjaxSearch`, {
-      params: {
-        keyword,
-        id: "-1",
-        link_web: host,
-      },
-    });
+    const { data } = await axios.get(
+      `${ajax}/${
+        host.includes("https://ww4.gogoanimes.org") ? "ajax" : ""
+      }site/loadAjaxSearch`,
+      {
+        params: {
+          keyword,
+          id: "-1",
+          link_web: host,
+        },
+      }
+    );
     const $ = cheerio.load(data.content);
 
     const images: string[] = [];
