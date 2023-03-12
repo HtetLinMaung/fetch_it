@@ -1,10 +1,10 @@
 import axios from "axios";
 import * as cheerio from "cheerio";
 
-// const host = "https://gogoanime.fi";
-// const ajax = "https://ajax.gogo-load.com";
-const host = "https://ww4.gogoanimes.org";
-const ajax = "https://ww4.gogoanimes.org";
+const host = "https://gogoanime.fi";
+const ajax = "https://ajax.gogo-load.com";
+// const host = "https://ww4.gogoanimes.org";
+// const ajax = "https://ww4.gogoanimes.org";
 
 export const getAnimes = async (m: string, p: number = 1) => {
   return getAnimesByUrl(`${m}${host.includes("fi") ? ".html" : ""}`, {
@@ -114,9 +114,19 @@ export const getRelatedEpisodes = async (c: string, eps: any[] = []) => {
     );
     const $ = cheerio.load(epres.data);
     $("#episode_related a").each(function (i, el) {
-      const episode = el.attribs.href.includes("-episode")
-        ? el.attribs.href.split("-").pop()
-        : "0";
+      // const episode = el.attribs.href.includes("-episode")
+      //   ? el.attribs.href.split("-").pop()
+      //   : "0";
+      let episode = "0";
+      if (el.attribs.href.includes("-episode")) {
+        const pattern = /^.*-\d{1,10}-\d{1,10}$/;
+        if (pattern.test(el.attribs.href)) {
+          const splitHref = el.attribs.href.split("-");
+          episode = splitHref[splitHref.length - 2];
+        } else {
+          episode = el.attribs.href.split("-").pop() as string;
+        }
+      }
       related_episodes.push({
         link: el.attribs.href,
         name: `EP ${episode}`,
