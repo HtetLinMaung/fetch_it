@@ -18,6 +18,7 @@ import { getRedisClient } from "../utils/redis";
 const router = express.Router();
 
 router.get("/recent-releases", async (req, res) => {
+  let alreadyResponse = false;
   try {
     const client = await getRedisClient();
     const value = await client.get(
@@ -25,6 +26,7 @@ router.get("/recent-releases", async (req, res) => {
     );
     if (value) {
       res.json(JSON.parse(value));
+      alreadyResponse = true;
     }
 
     const p: number = parseInt((req.query.page as string) || "1");
@@ -37,6 +39,7 @@ router.get("/recent-releases", async (req, res) => {
     };
     if (!value) {
       res.json(response);
+      alreadyResponse = true;
     }
     client.set(
       `fetchit:recent-releases:${JSON.stringify(req.query)}`,
@@ -44,7 +47,9 @@ router.get("/recent-releases", async (req, res) => {
     );
   } catch (err) {
     console.log(err);
-    res.status(500).json({ code: 500, message: "Server Error!" });
+    if (!alreadyResponse) {
+      res.status(500).json({ code: 500, message: "Server Error!" });
+    }
   }
 });
 
